@@ -1,17 +1,23 @@
-FROM node:20-alpine
+# Use the official Evolu relay image
+FROM evoluhq/relay:latest
 
-WORKDIR /app
+USER root
 
-# Install evolu relay from npm
-RUN npm install -g @evolu/server
+# Install netcat for health checks
+RUN apk add --no-cache netcat-openbsd
 
-# Create data directory
-RUN mkdir -p /app/data
+# Ensure data directory exists with correct permissions
+RUN mkdir -p /app/data && chown -R evolu:nodejs /app/data
 
 # Copy scripts
 COPY docker_entrypoint.sh /app/
-COPY scripts/health.sh /app/
-RUN chmod +x /app/*.sh
+COPY health-check.sh /app/
+RUN chmod +x /app/docker_entrypoint.sh /app/health-check.sh && \
+    chown evolu:nodejs /app/docker_entrypoint.sh /app/health-check.sh
+
+USER evolu
+
+WORKDIR /app
 
 EXPOSE 4000
 

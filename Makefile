@@ -1,37 +1,51 @@
-# Evolu Relay Start9 Package Makefile
+PKG_ID := $(shell yq e ".id" manifest.yaml)
+PKG_VERSION := $(shell yq e ".version" manifest.yaml)
 
-PKG_ID := evolu-relay
-PKG_VERSION := 1.0.0
+.DELETE_ON_ERROR:
 
-.PHONY: all clean verify pack install
+all: verify
 
-all: verify pack
+verify: $(PKG_ID).s9pk
+	@start-sdk verify s9pk $(PKG_ID).s9pk
+	@echo "Done! Package ready: $(PKG_ID).s9pk"
+	@echo "Filesize: $$(du -h $(PKG_ID).s9pk | cut -f1)"
 
-# Verify required files exist
-verify:
-	@echo "Verifying package structure..."
-	@test -f manifest.yaml || (echo "Missing manifest.yaml" && exit 1)
-	@test -f Dockerfile || (echo "Missing Dockerfile" && exit 1)
-	@test -f docker_entrypoint.sh || (echo "Missing docker_entrypoint.sh" && exit 1)
-	@test -f scripts/health.sh || (echo "Missing scripts/health.sh" && exit 1)
-	@test -f instructions.md || (echo "Missing instructions.md" && exit 1)
-	@test -f LICENSE || (echo "Missing LICENSE" && exit 1)
-	@test -f icon.png || (echo "Missing icon.png" && exit 1)
-	@echo "All required files present."
+clean:
+	rm -rf docker-images
+	rm -f $(PKG_ID).s9pk
+	rm -f scripts/embassy.js
 
-# Build the .s9pk package
-pack:
-	@echo "Building Start9 package..."
+# Bundle TypeScript to JavaScript
+scripts/embassy.js: scripts/embassy.ts scripts/procedures/*.ts scripts/deps.ts
+	deno run --allow-read --allow-write --allow-env --allow-net scripts/bundle.ts
+
+# Build Docker image for ARM64
+docker-images/aarch64.tar: Dockerfile docker_entrypoint.sh
+	mkdir -p docker-images
+	docker buildx build --tag start9/$(PKG_ID)/main:$(PKG_VERSION) \
+		--platform=linux/arm64 \
+		-o type=docker,dest=docker-images/aarch64.tar .
+
+# Build Docker image for x86_64
+docker-images/x86_64.tar: Dockerfile docker_entrypoint.sh
+	mkdir -p docker-images
+	docker buildx build --tag start9/$(PKG_ID)/main:$(PKG_VERSION) \
+		--platform=linux/amd64 \
+		-o type=docker,dest=docker-images/x86_64.tar .
+
+# Build the s9pk package
+$(PKG_ID).s9pk: manifest.yaml instructions.md icon.png LICENSE scripts/embassy.js docker-images/aarch64.tar docker-images/x86_64.tar
+	@echo "Building $(PKG_ID).s9pk..."
 	start-sdk pack
 
-# Clean build artifacts
-clean:
-	@echo "Cleaning build artifacts..."
-	rm -f $(PKG_ID).s9pk
+# Build only for ARM64 (faster for Start9 servers)
+arm: scripts/embassy.js docker-images/aarch64.tar
+	rm -f docker-images/x86_64.tar
+	start-sdk pack
 
-# Install to local Start9 server (requires SSH access)
-install: pack
-	@echo "Installing to Start9 server..."
-	@echo "Upload $(PKG_ID).s9pk via StartOS web interface or use:"
-	@echo "  scp $(PKG_ID).s9pk start9@<your-server>:/tmp/"
-	@echo "  Then sideload from StartOS System settings"
+# Build only for x86_64
+x86: scripts/embassy.js docker-images/x86_64.tar
+	rm -f docker-images/aarch64.tar
+	start-sdk pack
+
+.PHONY: all verify clean arm x86

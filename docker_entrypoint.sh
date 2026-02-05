@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-cd /app/data
+cd /app
 
-# Start Evolu relay
-exec npx @evolu/server --port 4000
+# Start the Evolu relay server
+exec node dist/index.js

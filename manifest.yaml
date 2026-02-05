@@ -1,9 +1,10 @@
 id: evolu-relay
 title: "Evolu Relay"
-version: 1.0.0
+version: 0.3.5.4
 release-notes: |
-  * Initial release
-  * Self-hosted sync relay for Evolu local-first apps
+  * Switch to Docker-based health check with shell script
+  * Use netcat to check if port 4000 is listening
+  * More reliable for WebSocket servers
 license: MIT
 wrapper-repo: "https://github.com/rabbitholiness/evolu-relay-startos"
 upstream-repo: "https://github.com/evoluhq/evolu"
@@ -29,22 +30,30 @@ assets:
 main:
   type: docker
   image: main
-  entrypoint: docker_entrypoint.sh
+  entrypoint: "docker_entrypoint.sh"
   args: []
   mounts:
     main: /app/data
+  gpu-acceleration: false
+
+hardware-requirements:
+  arch:
+    - x86_64
+    - aarch64
 
 health-checks:
-  main:
-    name: "Web Interface"
-    success-message: "Evolu Relay is ready"
+  web-ui:
+    name: WebSocket Interface
+    success-message: Evolu Relay is ready
     type: docker
     image: main
-    entrypoint: health.sh
+    entrypoint: health-check.sh
     args: []
     inject: true
-    system: false
     io-format: json
+
+config: ~
+properties: ~
 
 volumes:
   main:
@@ -65,6 +74,8 @@ interfaces:
     protocols:
       - tcp
       - http
+
+dependencies: {}
 
 backup:
   create:
