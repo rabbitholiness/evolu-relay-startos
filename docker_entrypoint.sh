@@ -1,7 +1,13 @@
 #!/bin/sh
 set -e
 
-cd /app
+echo "=== Evolu Relay Starting ==="
+echo "Fixing data directory permissions..."
 
-# Start the Evolu relay server
-exec node dist/index.js
+# Fix ownership of data directory (mounted by Start9 as root)
+chown -R evolu:nodejs /app/data
+
+echo "Starting server as evolu user..."
+
+# Switch to evolu user and start the server
+exec su-exec evolu node /app/dist/index.js
