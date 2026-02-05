@@ -33,28 +33,77 @@ make
 
 ## Usage
 
-After installation, find your Tor address in the service details. Configure your Evolu app to use:
+After installation, find your connection URLs in the service Interfaces:
 
+### LAN Access (Same Network)
+
+Use the `.local` address with secure WebSocket:
+```
+wss://<your-relay>.local:4000
+```
+
+Best for: Desktop apps on the same network as your Start9.
+
+### Tor Access (Remote/Mobile)
+
+Use the `.onion` address:
 ```
 ws://<your-onion-address>:4000
 ```
 
+**Note:** Native apps (Tauri, Electron) cannot connect to `.onion` directly - they require a Tor proxy. See [Troubleshooting](TROUBLESHOOTING.md) for details.
+
 ### SatsFlow Configuration
 
-Set the environment variable before building:
+**Option 1: In-App Settings (Recommended)**
+
+1. Go to **Settings → FlowSync → Configure Relay**
+2. Enter your relay URL (LAN or Tor)
+3. Click **Save & Restart**
+
+The free relay (`wss://free.evoluhq.com`) is always used as backup.
+
+**Option 2: Environment Variable**
 
 ```bash
-VITE_EVOLU_RELAY_URL="ws://<your-onion-address>:4000" npm run tauri build
+VITE_EVOLU_RELAY_URL="wss://<your-relay>.local:4000" npm run tauri dev
 ```
 
-SatsFlow will use your self-hosted relay as primary, with the free relay as backup.
+## Verifying It Works
+
+1. **Check SatsFlow logs** for `[sync] "onOpen"` messages to your relay
+2. **Check database file** on Start9:
+   ```bash
+   ssh start9@<your-server>.local
+   ls -la /embassy-data/package-data/volumes/evolu-relay/data/main/
+   # Should show evolu-relay.db with recent timestamp
+   ```
+
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for detailed verification steps.
 
 ## Technical Details
 
 - **Port:** 4000 (WebSocket)
-- **Package:** `@evolu/server` from npm
-- **Data:** Stored in `/app/data`, included in backups
+- **Base Image:** `evoluhq/relay:latest`
+- **Data:** SQLite database in `/app/data`, included in backups
 - **Privacy:** All data is encrypted client-side; relay only sees opaque blobs
+- **Architectures:** x86_64, aarch64
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `docker_entrypoint.sh` | Fixes volume permissions, starts server |
+| `health-check.sh` | Netcat-based port check |
+| `manifest.yaml` | StartOS service definition |
+
+## Troubleshooting
+
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common issues including:
+- Service stuck in "Starting" state (permission fix)
+- Health check failures
+- Tor address not working from native apps
+- How to verify sync is working
 
 ## License
 
