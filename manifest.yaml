@@ -1,0 +1,105 @@
+id: evolu-relay
+title: "Evolu Relay"
+version: 1.0.0
+release-notes: |
+  * Initial release
+  * Self-hosted sync relay for Evolu local-first apps
+license: MIT
+wrapper-repo: "https://github.com/rabbitholiness/evolu-relay-startos"
+upstream-repo: "https://github.com/evoluhq/evolu"
+support-site: "https://github.com/rabbitholiness/evolu-relay-startos/issues"
+marketing-site: "https://evolu.dev"
+build: ["make"]
+
+description:
+  short: "Self-hosted sync relay for Evolu local-first apps"
+  long: |
+    Evolu Relay enables end-to-end encrypted sync for local-first applications
+    built with Evolu. All data is encrypted client-side before reaching the relay -
+    the relay only sees opaque blobs.
+
+    Perfect for Bitcoin apps like SatsFlow that need cross-device sync without
+    trusting third-party services.
+
+assets:
+  license: LICENSE
+  icon: icon.png
+  instructions: instructions.md
+
+main:
+  type: docker
+  image: main
+  entrypoint: docker_entrypoint.sh
+  args: []
+  mounts:
+    main: /app/data
+
+health-checks:
+  main:
+    name: "Web Interface"
+    success-message: "Evolu Relay is ready"
+    type: docker
+    image: main
+    entrypoint: health.sh
+    args: []
+    inject: true
+    system: false
+    io-format: json
+
+volumes:
+  main:
+    type: data
+
+interfaces:
+  main:
+    name: "Evolu Relay WebSocket"
+    description: "WebSocket endpoint for Evolu sync"
+    tor-config:
+      port-mapping:
+        4000: "4000"
+    lan-config:
+      4000:
+        ssl: true
+        internal: 4000
+    ui: false
+    protocols:
+      - tcp
+      - http
+
+backup:
+  create:
+    type: docker
+    image: compat
+    system: true
+    entrypoint: compat
+    args:
+      - duplicity
+      - create
+      - /mnt/backup
+      - /app/data
+    mounts:
+      BACKUP: "/mnt/backup"
+      main: "/app/data"
+  restore:
+    type: docker
+    image: compat
+    system: true
+    entrypoint: compat
+    args:
+      - duplicity
+      - restore
+      - /mnt/backup
+      - /app/data
+    mounts:
+      BACKUP: "/mnt/backup"
+      main: "/app/data"
+
+migrations:
+  from:
+    "*":
+      type: script
+      args: ["from"]
+  to:
+    "*":
+      type: script
+      args: ["to"]
