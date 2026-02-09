@@ -112,5 +112,4 @@ MIT License - see [LICENSE](LICENSE)
 ## Related
 
 - [Evolu](https://evolu.dev) - Local-first database library
-- [SatsFlow](https://github.com/rabbitholiness/satsflow) - Bitcoin accounting app using Evolu
 - [StartOS](https://start9.com) - Sovereign computing platform
