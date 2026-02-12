@@ -53,25 +53,9 @@ ws://<your-onion-address>:4000
 
 **Note:** Native apps (Tauri, Electron) cannot connect to `.onion` directly - they require a Tor proxy. See [Troubleshooting](TROUBLESHOOTING.md) for details.
 
-### SatsFlow Configuration
-
-**Option 1: In-App Settings (Recommended)**
-
-1. Go to **Settings → FlowSync → Configure Relay**
-2. Enter your relay URL (LAN or Tor)
-3. Click **Save & Restart**
-
-The free relay (`wss://free.evoluhq.com`) is always used as backup.
-
-**Option 2: Environment Variable**
-
-```bash
-VITE_EVOLU_RELAY_URL="wss://<your-relay>.local:4000" npm run tauri dev
-```
-
 ## Verifying It Works
 
-1. **Check SatsFlow logs** for `[sync] "onOpen"` messages to your relay
+1. **Check your app's logs** for `[sync] "onOpen"` messages to your relay
 2. **Check database file** on Start9:
    ```bash
    ssh start9@<your-server>.local

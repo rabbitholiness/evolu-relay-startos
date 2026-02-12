@@ -72,7 +72,7 @@ The Internet connection appears to be offline.
 
 ## Verifying the Relay Works
 
-### 1. Check SatsFlow Logs
+### 1. Check App Logs
 
 Look for successful connection:
 ```

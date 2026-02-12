@@ -18,8 +18,8 @@ description:
     built with Evolu. All data is encrypted client-side before reaching the relay -
     the relay only sees opaque blobs.
 
-    Perfect for Bitcoin apps like SatsFlow that need cross-device sync without
-    trusting third-party services.
+    Perfect for apps that need cross-device sync without trusting third-party
+    services.
 
 assets:
   license: LICENSE

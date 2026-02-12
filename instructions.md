@@ -21,10 +21,10 @@ Use your Start9 server's local address:
 wss://<your-start9-local>:4000
 ```
 
-## Configuring SatsFlow
+## Configuring Your App
 
-In SatsFlow's relay configuration, add your Evolu Relay URL as the primary
-relay, with the free relay as backup:
+Point your Evolu-based app to this relay by setting the relay URL in your
+app's configuration, with the free relay as backup:
 
 ```typescript
 transports: [
@@ -35,7 +35,7 @@ transports: [
 
 Or set the environment variable before building:
 ```bash
-VITE_EVOLU_RELAY_URL="ws://<your-onion-address>:4000" npm run tauri build
+VITE_EVOLU_RELAY_URL="ws://<your-onion-address>:4000" npm run build
 ```
 
 ## Data Storage
